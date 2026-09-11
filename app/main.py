@@ -14,7 +14,7 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     yield
 
-app = FastAPI(title="Persons API", version="v1")
+app = FastAPI(title="Persons API", version="v1", lifespan=lifespan)
 
 PREFIX = "/api/v1/persons"
 
