@@ -47,17 +47,34 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/persons-api:latest
 
+  # deploy:
+  #   needs: build-and-push
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/main'
+  #   steps:
+  #     - name: Trigger Render Deploy
+  #       uses: JorgeLNJunior/render-deploy@v1.5.0
+  #       with:
+  #         service_id: ${{ secrets.RENDER_SERVICE_ID }}
+  #         api_key: ${{ secrets.RENDER_API_KEY }}
+  #         wait_deploy: true
+
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-      - name: Trigger Render Deploy
-        uses: JorgeLNJunior/render-deploy@v1.5.0
-        with:
-          service_id: ${{ secrets.RENDER_SERVICE_ID }}
-          api_key: ${{ secrets.RENDER_API_KEY }}
-          wait_deploy: true
+      - name: Trigger Render Deploy via REST API
+        run: |
+          curl --request POST \
+            --url "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+            --header "Accept: application/json" \
+            --header "Content-Type: application/json" \
+            --header "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            --data '{"imageUrl": "ghcr.io/alyoksi/persons-api:latest"}'
+
+      - name: Wait for service to come up
+        run: sleep 60
 
   integration-tests:
     needs: deploy
