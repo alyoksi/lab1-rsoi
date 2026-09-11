@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, HTTPException, Response
 from sqlalchemy.orm import Session
 
@@ -7,7 +8,11 @@ from app.database import Base, SessionLocal, engine, get_db
 from fastapi.responses import JSONResponse
 
 
-Base.metadata.create_all(bind=engine)
+# Запуст только при uvicorn
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    yield
 
 app = FastAPI(title="Persons API", version="v1")
 
