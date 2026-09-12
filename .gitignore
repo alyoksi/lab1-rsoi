@@ -1240,7 +1240,8 @@ buildNumber.properties
 
 
 # Custom
+build.yml
 postman/\[inst\]\[local\] Lab1.postman_environment.json
+docker-compose.yml
 start_tests.sh
 start_uvicorn.sh
-docker-compose.yml
