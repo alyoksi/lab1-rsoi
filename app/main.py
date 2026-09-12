@@ -8,7 +8,7 @@ from app.database import Base, SessionLocal, engine, get_db
 from fastapi.responses import JSONResponse
 
 
-# Запуст только при uvicorn
+# Only when uvicorn is used
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
@@ -73,7 +73,7 @@ def delete_person(person_id: int, db: Session = Depends(get_db)):
     return Response(status_code=204)
 
 
-# В OpenAPI прописано, чтобы возращался "message", подефолту будет "details"
+# It is said in OpenAPI that "message" should be returned and not "details" (which is gonna be by default)
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc: HTTPException):
     return JSONResponse(status_code=exc.status_code, content={"message": exc.detail})

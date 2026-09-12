@@ -13,15 +13,14 @@ engine = create_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-# engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 @pytest.fixture(autouse=True)
 def setup_db():
-    # Создаем таблицы перед каждым тестом
+    # Creates tables before every test
     Base.metadata.create_all(bind=engine)
     yield
-    # Очищаем таблицы после каждого теста
+    # Drops tables after every test
     Base.metadata.drop_all(bind=engine)
 
 def override_get_db():
@@ -71,6 +70,7 @@ def test_update_person(setup_db):
     assert response.json()["age"] == 26
 
 
+# Patch shouldn't change field that were not specified
 def test_update_person_preserves_unset_fields(setup_db):
     create = client.post(
         "/api/v1/persons",
@@ -78,7 +78,6 @@ def test_update_person_preserves_unset_fields(setup_db):
     )
     person_id = create.headers["location"].split("/")[-1]
 
-    # PATCH передаёт только name и address — age и work трогать не должен
     response = client.patch(
         f"/api/v1/persons/{person_id}",
         json={"name": "Sergey Updated", "address": "New street"},

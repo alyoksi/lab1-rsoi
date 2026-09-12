@@ -3,8 +3,8 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-# По умолчанию — локальный Postgres из docker-compose.
-# На Render/Railway переменная DATABASE_URL подставляется платформой автоматически.
+# Postgres from docker-compose by default.
+# In Render DATABASE_URL env. variable specified explicitly
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql://program:test@localhost:5432/persons",

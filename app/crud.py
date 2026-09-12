@@ -27,8 +27,7 @@ def update_person(
     db_person = get_person(db, person_id)
     if db_person is None:
         return None
-    # exclude_unset=True: берём только поля, реально присутствовавшие в JSON запроса,
-    # а не все поля схемы с дефолтным None — иначе PATCH затирал бы непереданные поля
+
     for field, value in person.model_dump(exclude_unset=True).items():
         setattr(db_person, field, value)
     db.commit()
