@@ -53,16 +53,31 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Trigger Render Deploy via REST API
+        id: deploy
         run: |
-          curl --request POST \
+          DEPLOY_ID=$(curl -s --request POST \
             --url "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
             --header "Accept: application/json" \
             --header "Content-Type: application/json" \
             --header "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-            --data '{"imageUrl": "ghcr.io/alyoksi/persons-api:latest"}'
+            --data "{\"imageUrl\": \"ghcr.io/${{ github.repository_owner }}/persons-api:latest\"}" \
+            | jq -r '.id')
+          echo "deploy_id=$DEPLOY_ID" >> "$GITHUB_OUTPUT"
 
-      - name: Wait for service to come up
-        run: sleep 60
+      - name: Wait for deploy to finish
+        run: |
+          for i in $(seq 1 10); do
+            STATUS=$(curl -s \
+              --url "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys/${{ steps.deploy.outputs.deploy_id }}" \
+              --header "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+              | jq -r '.status')
+            echo "Deploy status: $STATUS"
+            if [ "$STATUS" = "live" ]; then exit 0; fi
+            if [ "$STATUS" = "build_failed" ] || [ "$STATUS" = "update_failed" ]; then exit 1; fi
+            sleep 10
+          done
+          echo "Deploy did not finish in time"
+          exit 1
   
   integration-tests:
     needs: deploy
@@ -77,4 +92,3 @@ jobs:
         run: >
           newman run "postman/[inst] Lab1.postman_collection.json"
           -e "postman/[inst][heroku] Lab1.postman_environment.json"
-          --env-var "baseUrl=https://persons-api-latest.onrender.com"
